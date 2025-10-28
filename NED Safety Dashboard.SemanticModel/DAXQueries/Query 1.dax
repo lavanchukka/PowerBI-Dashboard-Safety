@@ -1,0 +1,18 @@
+// Learn more about DAX queries at https://aka.ms/dax-queries
+
+// Here is a sample DAX query from your model, click 'Run'
+// Try other DAX queries by right clicking a table, column, or measure in the data pane and choosing one from 'Quick queries'
+
+Custom Date Periods = 
+union(
+ADDCOLUMNS(
+    PREVIOUSMONTH(DATESYTD('FY25 Safety Plan Fact Table'[Plan_Due_Date])),"Period Type", "Previous Month"
+),
+ADDCOLUMNS(
+    NEXTMONTH(DATESYTD('FY25 Safety Plan Fact Table'[Plan_Due_Date])),"Period Type", "Next Month"
+),
+ADDCOLUMNS(
+    CALENDAR(MIN('FY25 Safety Plan Fact Table'[Plan_Due_Date]), max('FY25 Safety Plan Fact Table'[Plan_Due_Date])),
+    "Period Type", "All Time"
+)
+)

@@ -1,0 +1,26 @@
+table 'Safety Owner/Contact dim'
+	lineageTag: a6c041ad-2bf5-4491-a0ec-24187978e696
+
+	column Point_of_Contact
+		dataType: string
+		lineageTag: 193cec07-08a2-40e1-ac97-ea4b447581ed
+		summarizeBy: none
+		sourceColumn: Point_of_Contact
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Safety Owner/Contact dim' = m
+		mode: import
+		source =
+				let
+				    Source = #"FY25 Safety Plan Fact Table",
+				    #"Removed Other Columns" = Table.SelectColumns(Source,{ "Safety_Plan_Point_of_Contact"}),
+				    #"Removed Duplicates" = Table.Distinct(#"Removed Other Columns", {"Safety_Plan_Point_of_Contact"}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Removed Duplicates",{ {"Safety_Plan_Point_of_Contact", "Point_of_Contact"}})
+				in
+				    #"Renamed Columns"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

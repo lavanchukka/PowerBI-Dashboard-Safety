@@ -1,0 +1,22 @@
+relationship f7ecd46f-5d0f-3613-473a-23f73da03cc9
+	fromColumn: 'FY25 Safety Plan Fact Table'.Safety_Plan_Type
+	toColumn: 'Safety Plan Type dim'.Plan_Type
+
+relationship 50a5a35b-cc23-6c0f-6411-91d3dd92c190
+	fromColumn: 'FY25 Safety Plan Fact Table'.Safety_Plan_Point_of_Contact
+	toColumn: 'Safety Owner/Contact dim'.Point_of_Contact
+
+relationship 121b17fc-2501-bc97-e56c-8eddc74ac032
+	fromColumn: 'FY25 Safety Plan Fact Table'.Safety_Plan_Status
+	toColumn: 'Safety Status dim'.Plan_Status
+
+relationship d839f510-e929-46c7-6349-9f427cebd6eb
+	fromColumn: 'FY25 Safety Plan Fact Table'.Plan_Due_Date
+	toColumn: 'Dynamic Month Table'.'Dynamic Date Range'
+
+relationship 677b8bf1-db87-015c-028c-0c89e06aee05
+	crossFilteringBehavior: bothDirections
+	toCardinality: many
+	fromColumn: 'FY25 Safety Plan Fact Table'.'Safety Observer'
+	toColumn: 'Safety Observations dim'.Observer
+

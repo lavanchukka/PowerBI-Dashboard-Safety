@@ -1,0 +1,261 @@
+table 'Dates from Bravo'
+	isHidden
+	lineageTag: 9c52676e-81a4-4f1d-84ec-96bb6d378069
+	dataCategory: Time
+
+	measure _ShowValueForDates =
+			
+			VAR __LastDateWithData =
+			    CALCULATE (
+			        MAXX ( { MAX ( 'FY25 Safety Plan Fact Table'[Plan_Due_Date] ), MAX ( 'FY25 Safety Plan Fact Table'[Reviewed_Date] ), MAX ( 'FY25 Safety Plan Fact Table'[Task_start_Date] ), MAX ( 'FY Date Table dim'[Date] ) }, ''[Value] ),
+			        REMOVEFILTERS ()
+			    )
+			VAR __FirstDateVisible =
+			    MIN ( 'Dates from Bravo'[Date] )
+			VAR __Result =
+			    __FirstDateVisible <= __LastDateWithData
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Hidden Time Intelligence
+		lineageTag: 1ae2d504-91b1-4187-962d-9d4ae6f60b45
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	column Date
+		isHidden
+		isKey
+		formatString: m/d/yyyy
+		lineageTag: e9f23c95-2d33-4e97-9ea1-4a43b5f7b96c
+		dataCategory: PaddedDateTableDates
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Date]
+
+		annotation SQLBI_AttributeTypes = Date, FiscalDate
+
+	column DateKey
+		isHidden
+		formatString: 0
+		lineageTag: 616b6598-ec7a-46ed-9f01-1b7141a77e52
+		summarizeBy: count
+		isNameInferred
+		sourceColumn: DateAutoTemplate[DateKey]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Sequential Day Number'
+		isHidden
+		formatString: 0
+		lineageTag: 668fb334-d400-4c8b-b577-3c01c5eecec6
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Sequential Day Number]
+
+		annotation SQLBI_AttributeTypes = ManufacturingDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Year Month'
+		isHidden
+		lineageTag: e050c1a2-0b21-43f7-9a94-8d19c5ac5d53
+		dataCategory: Months
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Year Month]
+		sortByColumn: 'Year Month Number'
+
+	column 'Year Month Number'
+		isHidden
+		formatString: 0
+		lineageTag: d7284421-8c40-4165-8adc-8fb57f6df822
+		dataCategory: Months
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Year Month Number]
+
+		annotation SQLBI_AttributeTypes = FiscalMonths
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Year'
+		isHidden
+		lineageTag: bf75c83c-607f-409d-8c55-b74263fa064e
+		dataCategory: Years
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Fiscal Year]
+		sortByColumn: 'Fiscal Year Number'
+
+	column 'Fiscal Year Number'
+		isHidden
+		formatString: 0
+		lineageTag: ab02a629-b32a-4051-a7fa-a09bd270721d
+		dataCategory: Years
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Fiscal Year Number]
+
+		annotation SQLBI_AttributeTypes = FiscalYears
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Year Quarter'
+		isHidden
+		lineageTag: 4db002e5-aab7-4d55-b53a-c05e11cbe5d4
+		dataCategory: Quarters
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Fiscal Year Quarter]
+		sortByColumn: 'Fiscal Year Quarter Number'
+
+	column 'Fiscal Year Quarter Number'
+		isHidden
+		formatString: 0
+		lineageTag: 6672805f-8a8e-4112-b0be-0aa379cddd26
+		dataCategory: Quarters
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Fiscal Year Quarter Number]
+
+		annotation SQLBI_AttributeTypes = FiscalQuarters
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Quarter'
+		isHidden
+		lineageTag: 5b83244e-3a44-43ab-ba01-cbe21e667da8
+		dataCategory: QuarterOfYear
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Fiscal Quarter]
+
+	column Month
+		isHidden
+		lineageTag: 26abdd9b-78f4-4bfd-9f83-f0ed2f3392fe
+		dataCategory: MonthOfYear
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Month]
+		sortByColumn: 'Fiscal Month Number'
+
+	column 'Fiscal Month Number'
+		isHidden
+		formatString: 0
+		lineageTag: b229d636-49c0-4bdf-a57d-3daaa466fcba
+		dataCategory: MonthOfYear
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Fiscal Month Number]
+
+		annotation SQLBI_AttributeTypes = FiscalMonthOfYear
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Month in Quarter Number'
+		isHidden
+		formatString: 0
+		lineageTag: 83a7675b-6198-4689-a6e6-cb1d55f92228
+		dataCategory: MonthOfQuarter
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Fiscal Month in Quarter Number]
+
+		annotation SQLBI_AttributeTypes = FiscalMonthOfQuarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Week'
+		isHidden
+		lineageTag: b8341fb1-ab10-4bc2-a072-b07adaebf1a8
+		dataCategory: DayOfWeek
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Day of Week]
+		sortByColumn: 'Day of Week Number'
+
+		annotation SQLBI_AttributeTypes = FiscalDayOfWeek
+
+		annotation SQLBI_FilterSafe = True
+
+	column 'Day of Week Number'
+		isHidden
+		formatString: 0
+		lineageTag: 022495a2-e10d-4331-8b87-ef202f24e530
+		dataCategory: DayOfWeek
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Day of Week Number]
+
+		annotation SQLBI_AttributeTypes = FiscalDayOfWeek
+
+		annotation SQLBI_FilterSafe = True
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Month Number'
+		isHidden
+		formatString: 0
+		lineageTag: 50c02d91-98cb-4715-958f-c9753f98f25f
+		dataCategory: DayOfMonth
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Day of Month Number]
+
+		annotation SQLBI_AttributeTypes = FiscalDayOfMonth
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Fiscal Year Number'
+		isHidden
+		formatString: 0
+		lineageTag: fec6e812-1298-496e-a915-6093c942a594
+		dataCategory: DayOfYear
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: DateAutoTemplate[Day of Fiscal Year Number]
+
+		annotation SQLBI_AttributeTypes = FiscalDayOfYear
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateWithTransactions
+		isHidden
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 40566582-7d47-4e14-a9a9-7c861be03a0b
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: DateAutoTemplate[DateWithTransactions]
+
+		annotation SQLBI_AttributeTypes = DateDuration
+
+	hierarchy Fiscal
+		isHidden
+		lineageTag: 3bc7070b-2791-45de-a1fb-c45a905e7cbb
+
+		level Year
+			lineageTag: 45af7679-9387-4e54-b411-7e7e3bf95dec
+			column: 'Fiscal Year'
+
+		level Quarter
+			lineageTag: 0dc7a197-f051-4c72-8d00-f079be4916ee
+			column: 'Fiscal Year Quarter'
+
+		level Month
+			lineageTag: 8eceda7d-e2bb-442f-b902-71ac64abe13e
+			column: 'Year Month'
+
+	partition 'Dates from Bravo' = calculated
+		mode: import
+		source = DateAutoTemplate
+
+	annotation SQLBI_Template = Dates
+
+	annotation SQLBI_TemplateTable = Date
+
+	annotation SQLBI_CalendarType = Fiscal
+

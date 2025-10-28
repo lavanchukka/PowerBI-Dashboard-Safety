@@ -1,0 +1,1247 @@
+table 'FY25 Safety Plan Fact Table'
+	lineageTag: 0fddd512-826d-4174-b2f9-89525e934f08
+
+	measure 'Status Count' =
+			
+			COUNT ( 'FY25 Safety Plan Fact Table'[Safety_Plan_Status] )
+		formatString: 0
+		lineageTag: 497aca47-9e19-49f4-b412-43deaacb1a19
+
+	measure 'YTD Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] )
+			    VAR __LastFiscalYearAvailable = MAX ( 'Dates from Bravo'[Fiscal Year Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Fiscal Year Number] = __LastFiscalYearAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\To-date total\Status Count
+		lineageTag: 6c1da968-fb7b-404b-86be-9feeb5ffd2f0
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTD Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] )
+			    VAR __LastFiscalYearQuarterAvailable = MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __LastFiscalYearQuarterAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\To-date total\Status Count
+		lineageTag: d942edd2-2e0e-45a8-a3e6-2cc0cb4aebf2
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTD Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Month Number] )
+			    VAR __LastFiscalYearMonthAvailable = MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Month Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Year Month Number] = __LastFiscalYearMonthAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\To-date total\Status Count
+		lineageTag: 6fa6ebca-968f-4815-93eb-6e72475b8df4
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PY Status Count' =
+			
+			VAR __MonthsOffset = 12
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Status Count],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Status Count],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: 351c3c8c-8de2-47f1-8a38-04f7663a2828
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOY Status Count' =
+			
+			VAR __ValueCurrentPeriod = [Status Count]
+			VAR __ValuePreviousPeriod = [PY Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: c42fa693-44d0-4141-bc2b-50ca12c234fa
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOY % Status Count' =
+			
+			DIVIDE (
+			    [YOY Status Count],
+			    [PY Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: 475267cc-c7d8-4dbc-a01a-3ff46712dddb
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQ Status Count' =
+			
+			VAR __MonthsOffset = 3
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Status Count],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Status Count],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: 51d15659-8ffb-4b5e-a572-8f971cd69d61
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQ Status Count' =
+			
+			VAR __ValueCurrentPeriod = [Status Count]
+			VAR __ValuePreviousPeriod = [PQ Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: f13c2e8d-e5a9-417d-826e-f557b45aeb6a
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQ % Status Count' =
+			
+			DIVIDE (
+			    [QOQ Status Count],
+			    [PQ Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: 5af89081-4660-4d47-97fc-9738f4072dec
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PM Status Count' =
+			
+			VAR __MonthsOffset = 1
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Status Count],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Status Count],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: 21f1262a-d764-440c-8f42-f0f187e885cc
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOM Status Count' =
+			
+			VAR __ValueCurrentPeriod = [Status Count]
+			VAR __ValuePreviousPeriod = [PM Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: 90d6c860-5b90-479e-b902-85979d5fd89b
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOM % Status Count' =
+			
+			DIVIDE (
+			    [MOM Status Count],
+			    [PM Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\Growth\Status Count
+		lineageTag: 98f3446f-d35e-475e-8661-a69cc9674244
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYTD Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __PreviousFiscalYear = MAX ( 'Dates from Bravo'[Fiscal Year Number] ) - 1
+			    VAR __LastDayOfFiscalYearAvailable =
+			        CALCULATE (
+			            MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] ),
+			            -- Removes filters from filter-safe columns
+			            -- to get the last day with data selected in the report
+			            REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Number] = __PreviousFiscalYear,
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayOfFiscalYearAvailable,
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 4c98a1e1-0b8e-4387-bcec-fea759fcfb86
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOYTD Status Count' =
+			
+			VAR __ValueCurrentPeriod = [YTD Status Count]
+			VAR __ValuePreviousPeriod = [PYTD Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 408bd8ae-073a-4f03-8c57-84e1911ad55a
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOYTD % Status Count' =
+			
+			DIVIDE (
+			    [YOYTD Status Count],
+			    [PYTD Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 46573a3e-4176-4cfd-886e-eae9d3ea1f21
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQTD Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastMonthSelected =
+			        MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __DaysOnLastMonth =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __DaysLastMonthSelected =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE,
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __LastDayOfMonthWithTransactions =
+			        MAX (
+			            -- End of month of any month
+			            31 * (__DaysOnLastMonth = __DaysLastMonthSelected),
+			            -- or last day selected with data
+			            CALCULATE (
+			                MAX ( 'Dates from Bravo'[Day of Month Number] ),
+			                -- Removes filters from all of the filter-safe columns
+			                -- to get the last day with data selected in the report
+			                REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __LastMonthSelected,
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        )
+			    VAR __LastMonthInQuarterWithTransactions =
+			        CALCULATE (
+			            MAX ( 'Dates from Bravo'[Fiscal Month in Quarter Number] ),
+			            -- Removes filters from all of the filter-safe columns
+			            -- to get the last day with data selected in the report
+			            REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    VAR __PreviousFiscalYearQuarter =
+			        MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] ) - 1
+			    VAR __FilterQTD =
+			        FILTER (
+			            ALL ( 'Dates from Bravo'[Fiscal Month in Quarter Number], 'Dates from Bravo'[Day of Month Number] ),
+			            ISONORAFTER (
+			                'Dates from Bravo'[Fiscal Month in Quarter Number], __LastMonthInQuarterWithTransactions, DESC,
+			                'Dates from Bravo'[Day of Month Number], __LastDayOfMonthWithTransactions, DESC
+			            )
+			        )
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __PreviousFiscalYearQuarter,
+			            __FilterQTD
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: d02a6117-8b7c-4730-92b1-31a95f1c59c6
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQTD Status Count' =
+			
+			VAR __ValueCurrentPeriod = [QTD Status Count]
+			VAR __ValuePreviousPeriod = [PQTD Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 804251dc-5c08-45ee-af79-0d9223d4a13a
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQTD % Status Count' =
+			
+			DIVIDE (
+			    [QOQTD Status Count],
+			    [PQTD Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 0c02a06c-9479-47ec-af69-f477f4591fc4
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PMTD Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastMonthSelected =
+			        MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __DaysOnLastMonth =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __DaysLastMonthSelected =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE,
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __LastDayOfMonthWithTransactions =
+			        MAX (
+			            -- End of month of any month
+			            31 * (__DaysOnLastMonth = __DaysLastMonthSelected),
+			            -- or last day selected with data
+			            CALCULATE (
+			                MAX ( 'Dates from Bravo'[Day of Month Number] ),
+			                -- Removes filters from all of the filter-safe columns
+			                -- to get the last day with data selected in the report
+			                REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __LastMonthSelected,
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        )
+			    VAR __PreviousYearMonth = __LastMonthSelected - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __PreviousYearMonth,
+			            'Dates from Bravo'[Day of Month Number] <= __LastDayOfMonthWithTransactions
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 1a81e61e-27e5-46bf-a203-a8dc1a61a671
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOMTD Status Count' =
+			
+			VAR __ValueCurrentPeriod = [MTD Status Count]
+			VAR __ValuePreviousPeriod = [PMTD Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: acbea473-17de-4f38-9030-1518f912f40e
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOMTD % Status Count' =
+			
+			DIVIDE (
+			    [MOMTD Status Count],
+			    [PMTD Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 9889dfec-9589-4140-8559-d107d221b52d
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYC Status Count' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Fiscal Year Number] ),
+			    VAR __PreviousFiscalYear = MAX ( 'Dates from Bravo'[Fiscal Year Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Number] = __PreviousFiscalYear
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: 69039a51-ea22-4b09-b136-79959e105330
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YTDOPY Status Count' =
+			
+			VAR __ValueCurrentPeriod = [YTD Status Count]
+			VAR __ValuePreviousPeriod = [PYC Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: 2877560a-4408-42e0-9e65-f32054a06bdd
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YTDOPY % Status Count' =
+			
+			DIVIDE (
+			    [YTDOPY Status Count],
+			    [PYC Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: 540af787-33e4-4187-ac99-1722103dfa44
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQC Status Count' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Fiscal Year Quarter Number] ),
+			    VAR __PreviousFiscalYearQuarter = MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __PreviousFiscalYearQuarter
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: da3466e2-c9b7-4a93-ae68-75275620a9e8
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTDOPQ Status Count' =
+			
+			VAR __ValueCurrentPeriod = [QTD Status Count]
+			VAR __ValuePreviousPeriod = [PQC Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: e298e9ce-0100-41b0-863f-d2ab30a2bbaf
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTDOPQ % Status Count' =
+			
+			DIVIDE (
+			    [QTDOPQ Status Count],
+			    [PQC Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: 9c466f33-c915-4f6a-9785-333f89791b2c
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PMC Status Count' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Year Month Number] ),
+			    VAR __PreviousFiscalYearMonth = MAX ( 'Dates from Bravo'[Year Month Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __PreviousFiscalYearMonth
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: fd5da424-c04a-49f6-8b21-bc4a9ed63144
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTDOPM Status Count' =
+			
+			VAR __ValueCurrentPeriod = [MTD Status Count]
+			VAR __ValuePreviousPeriod = [PMC Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: f335ae84-70d7-47bc-afcd-8cdedde2be98
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTDOPM % Status Count' =
+			
+			DIVIDE (
+			    [MTDOPM Status Count],
+			    [PMC Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: fc6c31d1-3c58-45e4-a6d1-5238afbf8087
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MAT Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayMAT = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __FirstDayMAT = INT ( EDATE ( __LastDayMAT + 1, -12 ) )
+			    VAR Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Moving annual growth\Status Count
+		lineageTag: bf8d3be5-dcf6-4138-83ae-611e902acf42
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MAT-364 Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayMAT = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __FirstDayMAT = __LastDayMAT - 363
+			    VAR Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Moving annual growth\Status Count
+		lineageTag: e87fd153-79a8-4cfc-9463-56d01e180123
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYMAT Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __LastDayMAT = INT ( EDATE ( __LastDayAvailable, -12 ) )
+			    VAR __FirstDayMAT = INT ( EDATE ( __LastDayAvailable + 1, -24 ) )
+			    VAR Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Moving annual growth\Status Count
+		lineageTag: c5cc1c66-571f-429a-9faa-ceb676581b43
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYMAT-364 Status Count' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __LastDayMAT = __LastDayAvailable - 364
+			    VAR __FirstDayMAT = __LastDayMAT - 363
+			    VAR Result =
+			        CALCULATE (
+			            [Status Count],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		formatString: 0
+		displayFolder: Time intelligence\Moving annual growth\Status Count
+		lineageTag: 7c916b41-f816-442d-9418-a6d9e60cdc1f
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG Status Count' =
+			
+			VAR __ValueCurrentPeriod = [MAT Status Count]
+			VAR __ValuePreviousPeriod = [PYMAT Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: 7b99efe7-ed87-4343-91a9-6341a1730b66
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG-364 Status Count' =
+			
+			VAR __ValueCurrentPeriod = [MAT-364 Status Count]
+			VAR __ValuePreviousPeriod = [PYMAT-364 Status Count]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: 0
+		displayFolder: Time intelligence\Growth over full period\Status Count
+		lineageTag: f7cb4af3-2117-4316-b701-3ff454df8e1e
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG % Status Count' =
+			
+			DIVIDE (
+			    [MATG Status Count],
+			    [PYMAT Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 7e7a4e06-f957-4566-9959-6493fcf65b26
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG-364 % Status Count' =
+			
+			DIVIDE (
+			    [MATG-364 Status Count],
+			    [PYMAT-364 Status Count]
+			)
+		formatString: 0.00%
+		displayFolder: Time intelligence\To-date growth\Status Count
+		lineageTag: 179b63f5-ae49-4fbb-9739-d375e6cdb053
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	column WBS_Element
+		dataType: string
+		lineageTag: 8be713d8-8353-4564-bdf7-64a969b2303f
+		summarizeBy: none
+		sourceColumn: WBS_Element
+
+		annotation SummarizationSetBy = Automatic
+
+	column WBS_Description
+		dataType: string
+		lineageTag: 04925dee-7647-4137-90d5-6b385c278b03
+		summarizeBy: none
+		sourceColumn: WBS_Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column SAP_Number
+		dataType: string
+		lineageTag: d07dfa7c-00c5-4b8d-a2f2-515543266a56
+		summarizeBy: none
+		sourceColumn: SAP_Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column Safety_Plan_Type
+		dataType: string
+		lineageTag: fe822188-9014-487c-b748-ef607e94a952
+		summarizeBy: none
+		sourceColumn: Safety_Plan_Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column SSSWP_Needed
+		dataType: string
+		lineageTag: 3dc8c778-8a5d-4ce0-9fe0-a87d76a6ae80
+		summarizeBy: none
+		sourceColumn: SSSWP_Needed
+
+		annotation SummarizationSetBy = Automatic
+
+	column Plan_Scope
+		dataType: string
+		lineageTag: 8c47fc0e-c833-49df-87ee-3173653464e7
+		summarizeBy: none
+		sourceColumn: Plan_Scope
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Plan_ Notes'
+		dataType: string
+		lineageTag: f4a717a6-dc8e-4a9f-809e-5b4e23d09bb0
+		summarizeBy: none
+		sourceColumn: Plan_ Notes
+
+		annotation SummarizationSetBy = Automatic
+
+	column Work_Group
+		dataType: string
+		lineageTag: e2cf1c62-9ca5-471f-ad66-43441be76a91
+		summarizeBy: none
+		sourceColumn: Work_Group
+
+		annotation SummarizationSetBy = Automatic
+
+	column Work_Group_Detail
+		dataType: string
+		lineageTag: fe85ab30-2aca-4a04-8279-454b9d8f4aad
+		summarizeBy: none
+		sourceColumn: Work_Group_Detail
+
+		annotation SummarizationSetBy = Automatic
+
+	column On_Track_Protection_Type
+		dataType: string
+		lineageTag: de7a5f91-d955-4440-b9e7-9ab572ac17dd
+		summarizeBy: none
+		sourceColumn: On_Track_Protection_Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column Safety_Plan_Status
+		dataType: string
+		lineageTag: 74ac0cae-68ab-4b90-9025-8cdd9858bf27
+		summarizeBy: none
+		sourceColumn: Safety_Plan_Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column Safety_Plan_Point_of_Contact
+		dataType: string
+		lineageTag: 212ce955-e9a3-4727-8dfb-7ca4b3506a50
+		summarizeBy: none
+		sourceColumn: Safety_Plan_Point_of_Contact
+
+		annotation SummarizationSetBy = Automatic
+
+	column Plan_Due_Date
+		dataType: dateTime
+		formatString: mm/dd/yyyy
+		lineageTag: e176eae0-f121-4436-8c85-8a769dfd9229
+		summarizeBy: none
+		sourceColumn: Plan_Due_Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	column Reviewed_Date
+		dataType: dateTime
+		formatString: mm/dd/yyyy
+		lineageTag: 96fcec8b-fca2-4dd3-a2b5-95d58fd07752
+		summarizeBy: none
+		sourceColumn: Reviewed_Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	column FY
+		dataType: string
+		lineageTag: d8746bbe-d94b-4012-879e-952f9804ad96
+		summarizeBy: none
+		sourceColumn: FY
+
+		annotation SummarizationSetBy = Automatic
+
+	column Task_start_Date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 65c78e21-95d2-4f81-b93d-215e54bc74ba
+		summarizeBy: none
+		sourceColumn: Task_start_Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Month = FORMAT('FY25 Safety Plan Fact Table'[Plan_Due_Date],"mmm")
+		dataType: string
+		lineageTag: 70eca41e-90fa-487e-b88f-549acd490e06
+		summarizeBy: none
+
+		changedProperty = DataType
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year =
+			
+			year('FY25 Safety Plan Fact Table'[Plan_Due_Date])
+		formatString: 0
+		lineageTag: b6e44ece-a475-423d-82b6-09b09a09884e
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Safety Observer'
+		dataType: string
+		lineageTag: 83377923-8efa-4c61-bf5a-1e77d5506dc9
+		summarizeBy: none
+		sourceColumn: Safety Observer
+
+		annotation SummarizationSetBy = Automatic
+
+	column Plan_Due_Month
+		dataType: string
+		lineageTag: 5c8b6312-f44e-40a1-9f89-eecd77cd72f0
+		summarizeBy: none
+		sourceColumn: Plan_Due_Month
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month No'
+		dataType: int64
+		formatString: 0
+		lineageTag: 5cc148af-8cfe-43dd-afe9-ace5a529dfed
+		summarizeBy: sum
+		sourceColumn: Month No
+
+		annotation SummarizationSetBy = Automatic
+
+	hierarchy 'WBS Hierarchy'
+		lineageTag: f07c593d-4be8-4579-b422-bc668e1db8b5
+
+		level SAP_Number
+			lineageTag: 127fe508-8eb5-4340-afbe-ea2fe94a6bca
+			column: SAP_Number
+
+		level WBS_Element
+			lineageTag: eb6cd98c-a9d0-44aa-9c7a-1dbe27bc2c25
+			column: WBS_Element
+
+	partition 'FY25 Safety Plan Fact Table' = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(Web.Contents("https://amtrak.sharepoint.com/sites/CapitalDeliveryNortheast/Shared%20Documents/General/09-Portfolio_Workbooks/NortheastPortfolio-Data-FY25CapitalPlanning.xlsx"), null, true),
+				    Table15_Table = Source{[Item="Table15",Kind="Table"]}[Data],
+				    #"Changed Type" = Table.TransformColumnTypes(Table15_Table,{{"WBS_Element", type text}, {"WBS_Description", type text}, {"SAP_Number", type text}, {"Safety_Plan_Type", type text}, {"SSSWP_Needed", type text}, {"Safety_Plan_Scope", type text}, {"Safety_Plan_Notes", type any}, {"Work_Group", type text}, {"Work_Group_Detail", type any}, {"On_Track_Protection_Type", type any}, {"Safety_Plan_Status", type text}, {"Safety_Plan_Point_of_Contact", type text}, {"Safety_Plan_Due_Date", type date}, {"Task_Start_Date", type date}, {"Safety_Plan_Reviewed_Date", type date}, {"FY", type any}}),
+				    #"Reordered Columns" = Table.ReorderColumns(#"Changed Type",{"SAP_Number", "WBS_Element", "WBS_Description", "Safety_Plan_Type", "SSSWP_Needed", "Safety_Plan_Scope", "Safety_Plan_Notes", "Work_Group", "Work_Group_Detail", "On_Track_Protection_Type", "Safety_Plan_Status", "Safety_Plan_Point_of_Contact", "Safety_Plan_Due_Date", "Task_Start_Date", "Safety_Plan_Reviewed_Date", "FY"}),
+				    #"Replaced Value" = Table.ReplaceValue(#"Reordered Columns",null,"N/A",Replacer.ReplaceValue,{"Safety_Plan_Type"}),
+				    #"Replaced Value1" = Table.ReplaceValue(#"Replaced Value",null,"N/A",Replacer.ReplaceValue,{"Safety_Plan_Scope"}),
+				    #"Replaced Value2" = Table.ReplaceValue(#"Replaced Value1",null,"N/A",Replacer.ReplaceValue,{"Safety_Plan_Notes"}),
+				    #"Replaced Value3" = Table.ReplaceValue(#"Replaced Value2",null,"N/A",Replacer.ReplaceValue,{"Work_Group_Detail", "On_Track_Protection_Type"}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Replaced Value3",{{"Safety_Plan_Due_Date", "Due_Date"}, {"Task_Start_Date", "Task_Start_Date"}, {"Safety_Plan_Notes", "Plan_ Notes"}, {"Safety_Plan_Point_of_Contact", "Safety_Plan_Point_of_Contact"}, {"Safety_Plan_Reviewed_Date", "Reviewed_Date"}, {"Safety_Plan_Scope", "Plan_Scope"}, {"Safety_Plan_Status", "Safety_Plan_Status"}, {"Safety_Plan_Type", "Safety_Plan_Type"}}),
+				    #"Renamed Columns1" = Table.RenameColumns(#"Renamed Columns",{{"Task_Start_Date", "Task_start_Date"}, {"Due_Date", "Plan_Due_Date"}}),
+				    #"Replaced Value4" = Table.ReplaceValue(#"Renamed Columns1",#date(1899, 12, 9),#date(2020, 12, 1),Replacer.ReplaceValue,{"Plan_Due_Date"}),
+				    #"Replaced Value5" = Table.ReplaceValue(#"Replaced Value4",#date(2020, 12, 1),#date(1999, 1, 1),Replacer.ReplaceValue,{"Plan_Due_Date"}),
+				    #"Filtered Rows" = Table.SelectRows(#"Replaced Value5", each ([FY] = "FY25")),
+				    #"Inserted Literal" = Table.AddColumn(#"Filtered Rows", "Literal", each "Seery, Tim", type text),
+				    #"Renamed Columns2" = Table.RenameColumns(#"Inserted Literal",{{"Literal", "Safety Observer"}}),
+				    #"Added Conditional Column" = Table.AddColumn(#"Renamed Columns2", "Month No 1", each if Text.StartsWith([Plan_Due_Month], "oct") then 1 else if Text.StartsWith([Plan_Due_Month], "nov") then 2 else if Text.StartsWith([Plan_Due_Month], "dec") then 3 else if Text.StartsWith([Plan_Due_Month], "jan") then 4 else if Text.StartsWith([Plan_Due_Month], "feb") then 5 else if Text.StartsWith([Plan_Due_Month], "mar") then 6 else if Text.StartsWith([Plan_Due_Month], "apr") then 7 else if Text.StartsWith([Plan_Due_Month], "may") then 8 else if Text.StartsWith([Plan_Due_Month], "jun") then 9 else if Text.StartsWith([Plan_Due_Month], "jul") then 10 else if Text.StartsWith([Plan_Due_Month], "aug") then 11 else if Text.StartsWith([Plan_Due_Month], "sep") then 12 else "N/A"),
+				    #"Replaced Errors" = Table.ReplaceErrorValues(#"Added Conditional Column", {{"Plan_Due_Date", #date(1111, 1, 1)}}),
+				    #"Changed Type2" = Table.TransformColumnTypes(#"Replaced Errors",{{"Plan_Due_Month", type text}}),
+				    #"Changed Type1" = Table.TransformColumnTypes(#"Changed Type2",{{"Plan_Due_Month", type text}, {"Month No 1", Int64.Type}}),
+				    #"Renamed Columns3" = Table.RenameColumns(#"Changed Type1",{{"Month No 1", "Month No"}})
+				in
+				    #"Renamed Columns3"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

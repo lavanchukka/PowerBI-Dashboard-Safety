@@ -1,0 +1,93 @@
+table 'FY Date Table dim'
+	isHidden
+	lineageTag: 2435aff5-56bc-4c5b-907d-91362c0c6483
+	dataCategory: Time
+
+	column Date
+		isHidden
+		isKey
+		formatString: Long Date
+		lineageTag: 33c11d84-77f8-4420-95ba-4ed42efe19a7
+		summarizeBy: none
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Month = format('FY Date Table dim'[Date],"mmm")
+		isHidden
+		lineageTag: b703aede-545b-4486-93bc-dc20092fa77a
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'FY Month No' = month(edate('FY Date Table dim'[Date],-9))
+		dataType: string
+		isHidden
+		lineageTag: b4ea0b49-f669-408b-8515-a44a5d480636
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'FY Qtr No' = "Q" & QUARTER(edate('FY Date Table dim'[Date],-9))
+		isHidden
+		lineageTag: e47a3979-8d81-4dbd-8596-e620b66852bc
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Year yy-yy' =
+			"Year" & " " &
+			
+			VAR CY = right(year('FY Date Table dim'[Date]),2)
+			VAR LY = right(year('FY Date Table dim'[Date])-1,2)
+			VAR NY = right(year('FY Date Table dim'[Date])+1,2)
+			VAR Fiscalyear =
+			if(
+			    month('FY Date Table dim'[Date])>=10,
+			    CY &"-" & NY,
+			    LY & "-" & CY
+			     )
+			     return
+			     Fiscalyear
+		isHidden
+		lineageTag: c3c0f021-bd37-4aab-b60c-6e3405a43e95
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year = year([Date])
+		isHidden
+		formatString: 0
+		lineageTag: df177242-d797-45aa-a714-1097f20ac383
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column FY =
+			"FY" &
+			
+			VAR CY = right(year('FY Date Table dim'[Date]),2)
+			VAR LY = right(year('FY Date Table dim'[Date])-1,2)
+			VAR NY = right(year('FY Date Table dim'[Date])+1,2)
+			VAR Fiscalyear =
+			if(
+			    month('FY Date Table dim'[Date])>=10,
+			    NY,
+			    CY
+			     )
+			     return
+			     Fiscalyear
+		isHidden
+		lineageTag: e3389687-00c8-48af-bf0d-f66a8fca8e24
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'FY Date Table dim' = calculated
+		mode: import
+		source = CALENDARAUTO(9)
+
+	annotation PBI_Id = 2ee1d701966d43ebb094a1e0f07e8585
+

@@ -1,0 +1,88 @@
+table 'Safety Observations dim'
+	lineageTag: 25716622-63d2-4229-a6ce-498361e5e528
+
+	column WBS_Element
+		dataType: string
+		lineageTag: c0f5d451-ec2b-4e2e-9d78-90be738ef5d6
+		summarizeBy: none
+		sourceColumn: WBS_Element
+
+		annotation SummarizationSetBy = Automatic
+
+	column WBS_Description
+		dataType: string
+		lineageTag: c4f51981-bde6-406b-9d7c-7066a88d3449
+		summarizeBy: none
+		sourceColumn: WBS_Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column Observer
+		dataType: string
+		lineageTag: eede9c3c-322a-4615-af68-1ebfb3b909aa
+		summarizeBy: none
+		sourceColumn: Observer
+
+		annotation SummarizationSetBy = Automatic
+
+	column Observation_Date
+		dataType: string
+		lineageTag: c385a11c-f0ed-479d-bd2a-d0d6d3b4b224
+		summarizeBy: none
+		sourceColumn: Observation_Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column Observation_Location
+		dataType: string
+		lineageTag: 81ce463d-9ef8-45cd-aa50-f42464ac82a6
+		summarizeBy: none
+		sourceColumn: Observation_Location
+
+		annotation SummarizationSetBy = Automatic
+
+	column Observed_Work_Group
+		dataType: string
+		lineageTag: 18e78c6b-323a-4230-b308-82244841ad0b
+		summarizeBy: none
+		sourceColumn: Observed_Work_Group
+
+		annotation SummarizationSetBy = Automatic
+
+	column Observed_Task
+		dataType: string
+		lineageTag: 0fe30999-2cba-4495-947c-c9ac511f9599
+		summarizeBy: none
+		sourceColumn: Observed_Task
+
+		annotation SummarizationSetBy = Automatic
+
+	column Observation_Notes
+		dataType: string
+		lineageTag: 5fd9c58a-d29b-4af8-9327-a78dfbc5def6
+		summarizeBy: none
+		sourceColumn: Observation_Notes
+
+		annotation SummarizationSetBy = Automatic
+
+	column Observation_Month
+		dataType: string
+		lineageTag: 4cdeb287-483e-4d18-80a3-d74592529a36
+		summarizeBy: none
+		sourceColumn: Observation_Month
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Safety Observations dim' = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(Web.Contents("https://amtrak.sharepoint.com/sites/CapitalDeliveryNortheast/Shared%20Documents/General/09-Portfolio_Workbooks/NortheastPortfolio-Data-FY25CapitalPlanning.xlsx"), null, true),
+				    Table19_Table = Source{[Item="Table19",Kind="Table"]}[Data]
+				in
+				    Table19_Table
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

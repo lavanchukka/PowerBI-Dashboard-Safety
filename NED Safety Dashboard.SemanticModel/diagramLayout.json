@@ -1,0 +1,152 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 394.75000762939453,
+            "y": 32.5625
+          },
+          "nodeIndex": "FY25 Safety Plan Fact Table",
+          "nodeLineageTag": "0fddd512-826d-4174-b2f9-89525e934f08",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 9
+        },
+        {
+          "location": {
+            "x": 155.75001525878906,
+            "y": 541.0625
+          },
+          "nodeIndex": "Safety Owner/Contact dim",
+          "nodeLineageTag": "a6c041ad-2bf5-4491-a0ec-24187978e696",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 726.75001525878906,
+            "y": 43.75
+          },
+          "nodeIndex": "Safety Plan Type dim",
+          "nodeLineageTag": "219044a5-97c3-4e15-8b3d-4481889203b4",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 5
+        },
+        {
+          "location": {
+            "x": 92.750015258789063,
+            "y": 33.75
+          },
+          "nodeIndex": "Safety Status dim",
+          "nodeLineageTag": "a647b001-7799-4f95-bcd6-ff86cdcd72aa",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 6
+        },
+        {
+          "location": {
+            "x": 1056,
+            "y": 277
+          },
+          "nodeIndex": "FY Date Table dim",
+          "nodeLineageTag": "2435aff5-56bc-4c5b-907d-91362c0c6483",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 8
+        },
+        {
+          "location": {
+            "x": 415.25,
+            "y": 541.15625
+          },
+          "nodeIndex": "Safety Observations dim",
+          "nodeLineageTag": "25716622-63d2-4229-a6ce-498361e5e528",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 1047.2499847412109,
+            "y": 45.90625
+          },
+          "nodeIndex": "Measures table",
+          "nodeLineageTag": "7f4793aa-88c3-4794-9e8c-a95f2c56e513",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 10
+        },
+        {
+          "location": {
+            "x": 1042.3333129882813,
+            "y": 492.15625
+          },
+          "nodeIndex": "DateAutoTemplate",
+          "nodeLineageTag": "8bf5644d-1f6a-438a-9b6a-8c84969da31a",
+          "size": {
+            "height": 330,
+            "width": 234
+          },
+          "zIndex": 7
+        },
+        {
+          "location": {
+            "x": 1300,
+            "y": 47.75
+          },
+          "nodeIndex": "Dates from Bravo",
+          "nodeLineageTag": "9c52676e-81a4-4f1d-84ec-96bb6d378069",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 687.41659545898438,
+            "y": 550.453125
+          },
+          "nodeIndex": "Dynamic Month Table",
+          "nodeLineageTag": "8953666f-88cf-4f01-be98-b80434e01291",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 80,
+      "pinKeyFieldsToTop": true,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

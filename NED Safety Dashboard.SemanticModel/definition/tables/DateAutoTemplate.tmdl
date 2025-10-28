@@ -1,0 +1,2388 @@
+table DateAutoTemplate
+	isHidden
+	lineageTag: 8bf5644d-1f6a-438a-9b6a-8c84969da31a
+	dataCategory: Time
+
+	measure 'Upcoming SSSWP''s' =
+			
+			NEXTMONTH ( 'FY25 Safety Plan Fact Table'[Plan_Due_Date] )
+		formatString: General Date
+		isHidden
+		lineageTag: 4a04d1ef-2da5-4624-8cf0-f56d88137cbe
+
+	measure 'YTD Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] )
+			    VAR __LastFiscalYearAvailable = MAX ( 'Dates from Bravo'[Fiscal Year Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Fiscal Year Number] = __LastFiscalYearAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\To-date total\Current month
+		lineageTag: 99381152-ba80-44f2-b1a9-ad6b65fa79bb
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTD Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] )
+			    VAR __LastFiscalYearQuarterAvailable = MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __LastFiscalYearQuarterAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\To-date total\Current month
+		lineageTag: d6490628-ab4a-430d-b1e7-4de75c3fbd03
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTD Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Month Number] )
+			    VAR __LastFiscalYearMonthAvailable = MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Month Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Year Month Number] = __LastFiscalYearMonthAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\To-date total\Current month
+		lineageTag: 41a0af3f-7cd6-4812-897b-819d17de3a9e
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PY Current month' =
+			
+			VAR __MonthsOffset = 12
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Current month],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Current month],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: a8990e29-137a-4016-b81f-6cf3a3c2b376
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOY Current month' =
+			
+			VAR __ValueCurrentPeriod = [Current month]
+			VAR __ValuePreviousPeriod = [PY Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: b1dd74ea-d8d0-4643-b018-8ae0c650a0e8
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOY % Current month' =
+			
+			DIVIDE (
+			    [YOY Current month],
+			    [PY Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: 38f487c2-dfba-4193-923a-23e9e0dd57c6
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQ Current month' =
+			
+			VAR __MonthsOffset = 3
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Current month],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Current month],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: 0266420f-7780-4bf0-baf0-812b721da249
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQ Current month' =
+			
+			VAR __ValueCurrentPeriod = [Current month]
+			VAR __ValuePreviousPeriod = [PQ Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: 9f1e2193-06ae-438b-9e70-4f24bfc36809
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQ % Current month' =
+			
+			DIVIDE (
+			    [QOQ Current month],
+			    [PQ Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: 6932670c-24ea-429c-8ba2-e78301041173
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PM Current month' =
+			
+			VAR __MonthsOffset = 1
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Current month],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Current month],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: 3bb1cb34-f1c4-4e48-91c1-1340c9d31cea
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOM Current month' =
+			
+			VAR __ValueCurrentPeriod = [Current month]
+			VAR __ValuePreviousPeriod = [PM Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: 39d893bc-fbfc-415e-8792-339bd36051fc
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOM % Current month' =
+			
+			DIVIDE (
+			    [MOM Current month],
+			    [PM Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth\Current month
+		lineageTag: 55e48d57-a757-4df6-b1a2-652a9f022481
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYTD Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __PreviousFiscalYear = MAX ( 'Dates from Bravo'[Fiscal Year Number] ) - 1
+			    VAR __LastDayOfFiscalYearAvailable =
+			        CALCULATE (
+			            MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] ),
+			            -- Removes filters from filter-safe columns
+			            -- to get the last day with data selected in the report
+			            REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Number] = __PreviousFiscalYear,
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayOfFiscalYearAvailable,
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: 5ed8e3df-673c-46c4-a4ba-fc218f825985
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOYTD Current month' =
+			
+			VAR __ValueCurrentPeriod = [YTD Current month]
+			VAR __ValuePreviousPeriod = [PYTD Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: efcb5bdf-5d4e-47fb-97d6-60d0c9abc62d
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOYTD % Current month' =
+			
+			DIVIDE (
+			    [YOYTD Current month],
+			    [PYTD Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: d0bd16f4-a0d2-453a-97b6-df5c69db8193
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQTD Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastMonthSelected =
+			        MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __DaysOnLastMonth =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __DaysLastMonthSelected =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE,
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __LastDayOfMonthWithTransactions =
+			        MAX (
+			            -- End of month of any month
+			            31 * (__DaysOnLastMonth = __DaysLastMonthSelected),
+			            -- or last day selected with data
+			            CALCULATE (
+			                MAX ( 'Dates from Bravo'[Day of Month Number] ),
+			                -- Removes filters from all of the filter-safe columns
+			                -- to get the last day with data selected in the report
+			                REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __LastMonthSelected,
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        )
+			    VAR __LastMonthInQuarterWithTransactions =
+			        CALCULATE (
+			            MAX ( 'Dates from Bravo'[Fiscal Month in Quarter Number] ),
+			            -- Removes filters from all of the filter-safe columns
+			            -- to get the last day with data selected in the report
+			            REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    VAR __PreviousFiscalYearQuarter =
+			        MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] ) - 1
+			    VAR __FilterQTD =
+			        FILTER (
+			            ALL ( 'Dates from Bravo'[Fiscal Month in Quarter Number], 'Dates from Bravo'[Day of Month Number] ),
+			            ISONORAFTER (
+			                'Dates from Bravo'[Fiscal Month in Quarter Number], __LastMonthInQuarterWithTransactions, DESC,
+			                'Dates from Bravo'[Day of Month Number], __LastDayOfMonthWithTransactions, DESC
+			            )
+			        )
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __PreviousFiscalYearQuarter,
+			            __FilterQTD
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: 487c3942-0a2d-4580-9851-0f2018e91f69
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQTD Current month' =
+			
+			VAR __ValueCurrentPeriod = [QTD Current month]
+			VAR __ValuePreviousPeriod = [PQTD Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: bff79dce-c6d6-499f-9dcc-4189d09a0c9c
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQTD % Current month' =
+			
+			DIVIDE (
+			    [QOQTD Current month],
+			    [PQTD Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: c66a60c2-0c0f-4498-ba7c-39b12b2c8707
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PMTD Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastMonthSelected =
+			        MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __DaysOnLastMonth =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __DaysLastMonthSelected =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE,
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __LastDayOfMonthWithTransactions =
+			        MAX (
+			            -- End of month of any month
+			            31 * (__DaysOnLastMonth = __DaysLastMonthSelected),
+			            -- or last day selected with data
+			            CALCULATE (
+			                MAX ( 'Dates from Bravo'[Day of Month Number] ),
+			                -- Removes filters from all of the filter-safe columns
+			                -- to get the last day with data selected in the report
+			                REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __LastMonthSelected,
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        )
+			    VAR __PreviousYearMonth = __LastMonthSelected - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __PreviousYearMonth,
+			            'Dates from Bravo'[Day of Month Number] <= __LastDayOfMonthWithTransactions
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: 2c80c429-6bab-466c-b859-ef1118444d84
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOMTD Current month' =
+			
+			VAR __ValueCurrentPeriod = [MTD Current month]
+			VAR __ValuePreviousPeriod = [PMTD Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: 08db1768-c700-4c4b-b877-716ed67ad24e
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOMTD % Current month' =
+			
+			DIVIDE (
+			    [MOMTD Current month],
+			    [PMTD Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: bfe2051b-0c94-41a5-8aa6-709f60f1861a
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYC Current month' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Fiscal Year Number] ),
+			    VAR __PreviousFiscalYear = MAX ( 'Dates from Bravo'[Fiscal Year Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Number] = __PreviousFiscalYear
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: 95bf7f65-0915-47ea-bdc9-ae4e5410f159
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YTDOPY Current month' =
+			
+			VAR __ValueCurrentPeriod = [YTD Current month]
+			VAR __ValuePreviousPeriod = [PYC Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: 7039c141-0793-48f8-b9ba-673e55a3eeef
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YTDOPY % Current month' =
+			
+			DIVIDE (
+			    [YTDOPY Current month],
+			    [PYC Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: e5710ff2-5818-45a7-a12f-64da18173fcc
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQC Current month' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Fiscal Year Quarter Number] ),
+			    VAR __PreviousFiscalYearQuarter = MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __PreviousFiscalYearQuarter
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: d2fb7630-5394-4227-96c0-7d36eb12c65b
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTDOPQ Current month' =
+			
+			VAR __ValueCurrentPeriod = [QTD Current month]
+			VAR __ValuePreviousPeriod = [PQC Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: 24f25b7f-5861-4c06-914e-a7c819014d75
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTDOPQ % Current month' =
+			
+			DIVIDE (
+			    [QTDOPQ Current month],
+			    [PQC Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: 3885b41f-7acb-4fd9-bbe4-d77bb07019bb
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PMC Current month' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Year Month Number] ),
+			    VAR __PreviousFiscalYearMonth = MAX ( 'Dates from Bravo'[Year Month Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __PreviousFiscalYearMonth
+			        )
+			    RETURN
+			        __Result
+			)
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: 8dfb3116-0fd6-4d1f-bf89-321661c0eb9a
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTDOPM Current month' =
+			
+			VAR __ValueCurrentPeriod = [MTD Current month]
+			VAR __ValuePreviousPeriod = [PMC Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: 926a89d4-0709-43c3-9775-36cabf65e9ff
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTDOPM % Current month' =
+			
+			DIVIDE (
+			    [MTDOPM Current month],
+			    [PMC Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: 69c3fd29-70ad-4162-a05f-c220375c11e2
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MAT Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayMAT = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __FirstDayMAT = INT ( EDATE ( __LastDayMAT + 1, -12 ) )
+			    VAR Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		isHidden
+		displayFolder: Time intelligence\Moving annual growth\Current month
+		lineageTag: 52d8526c-597c-425f-b5af-c7033cb018d4
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MAT-364 Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayMAT = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __FirstDayMAT = __LastDayMAT - 363
+			    VAR Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		isHidden
+		displayFolder: Time intelligence\Moving annual growth\Current month
+		lineageTag: e5865d7b-0678-4025-b547-c9ab0405f2c9
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYMAT Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __LastDayMAT = INT ( EDATE ( __LastDayAvailable, -12 ) )
+			    VAR __FirstDayMAT = INT ( EDATE ( __LastDayAvailable + 1, -24 ) )
+			    VAR Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		isHidden
+		displayFolder: Time intelligence\Moving annual growth\Current month
+		lineageTag: 48bdcc04-fc55-4112-b94a-6b22bb8457a3
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYMAT-364 Current month' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __LastDayMAT = __LastDayAvailable - 364
+			    VAR __FirstDayMAT = __LastDayMAT - 363
+			    VAR Result =
+			        CALCULATE (
+			            [Current month],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		isHidden
+		displayFolder: Time intelligence\Moving annual growth\Current month
+		lineageTag: e907c7a9-bc3f-48a6-be6d-b8cdb167414d
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG Current month' =
+			
+			VAR __ValueCurrentPeriod = [MAT Current month]
+			VAR __ValuePreviousPeriod = [PYMAT Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: d48a58cd-e63d-46b2-a76d-16e0c58a49de
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG-364 Current month' =
+			
+			VAR __ValueCurrentPeriod = [MAT-364 Current month]
+			VAR __ValuePreviousPeriod = [PYMAT-364 Current month]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Current month
+		lineageTag: 430d6cb4-8b8d-4377-922b-9d7690811735
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG % Current month' =
+			
+			DIVIDE (
+			    [MATG Current month],
+			    [PYMAT Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: 0a9ff0b3-35e1-473a-9512-3a84c31b9cbf
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG-364 % Current month' =
+			
+			DIVIDE (
+			    [MATG-364 Current month],
+			    [PYMAT-364 Current month]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Current month
+		lineageTag: eaa4ccd0-f6a8-4548-b8b4-f7fb13f25dd1
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YTD Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] )
+			    VAR __LastFiscalYearAvailable = MAX ( 'Dates from Bravo'[Fiscal Year Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Fiscal Year Number] = __LastFiscalYearAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date total\Upcoming SSSWP's
+		lineageTag: f1135fba-e055-4329-bbf1-d6ba99206bd6
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTD Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] )
+			    VAR __LastFiscalYearQuarterAvailable = MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __LastFiscalYearQuarterAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date total\Upcoming SSSWP's
+		lineageTag: 1f95d692-a5d0-42dd-85aa-7efa3a7b07cc
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTD Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Day of Month Number] )
+			    VAR __LastFiscalYearMonthAvailable = MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Day of Month Number] <= __LastDayAvailable,
+			            'Dates from Bravo'[Year Month Number] = __LastFiscalYearMonthAvailable
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date total\Upcoming SSSWP's
+		lineageTag: 46d7a1e5-fa65-4d5f-910a-e3a95722daa8
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PY Upcoming SSSWP''s' =
+			
+			VAR __MonthsOffset = 12
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Upcoming SSSWP's],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Upcoming SSSWP's],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: 9f07e625-a640-410a-ae46-c2bbdb61b280
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOY Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PY Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: 4c4ff202-2442-4d23-84e7-0755b7f9d408
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOY % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [YOY Upcoming SSSWP's],
+			    [PY Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: 2e79112a-c0cb-43dd-9059-784aa2736226
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQ Upcoming SSSWP''s' =
+			
+			VAR __MonthsOffset = 3
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Upcoming SSSWP's],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Upcoming SSSWP's],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: 977f253c-7d88-4147-bc74-d1c44c4c5e71
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQ Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PQ Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: 9b1d17c8-a9f0-4807-a351-6cf3ba4d0c47
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQ % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [QOQ Upcoming SSSWP's],
+			    [PQ Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: ebe592f4-b06a-4fd4-9417-a5f864afde4c
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PM Upcoming SSSWP''s' =
+			
+			VAR __MonthsOffset = 1
+			RETURN IF (
+			    [_ShowValueForDates],
+			    SUMX (
+			        SUMMARIZE ( 'Dates from Bravo', 'Dates from Bravo'[Year Month Number] ),
+			        VAR __CurrentYearMonthNumber = 'Dates from Bravo'[Year Month Number]
+			        VAR __PreviousYearMonthNumber = __CurrentYearMonthNumber - __MonthsOffset
+			        VAR __DaysOnMonth =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                ALLEXCEPT (
+			                    'Dates from Bravo',
+			                    'Dates from Bravo'[Year Month Number], -- Year Month granularity
+			                    'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] -- Filter-safe columns
+			                )
+			            )
+			        VAR __DaysSelected =
+			            CALCULATE (
+			                COUNTROWS ( 'Dates from Bravo' ),
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        RETURN IF (
+			            __DaysOnMonth = __DaysSelected,
+			
+			            -- Selection of all days in the month
+			            CALCULATE (
+			                [Upcoming SSSWP's],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber
+			            ),
+			
+			            -- Partial selection of days in a month
+			            CALCULATE (
+			                [Upcoming SSSWP's],
+			                ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __PreviousYearMonthNumber,
+			                CALCULATETABLE (
+			                    VALUES ( 'Dates from Bravo'[Day of Month Number] ),
+			                    -- Removes filters from all the columns that do not have a day
+			                    -- granularity, keeping only Date and Day of Month Number
+			                    ALLEXCEPT (
+			                        'Dates from Bravo',
+			                        'Dates from Bravo'[Day of Month Number],
+			                        'Dates from Bravo'[Date]
+			                    ),
+			                    'Dates from Bravo'[Year Month Number] = __CurrentYearMonthNumber,
+			                    'Dates from Bravo'[DateWithTransactions] = TRUE
+			                )
+			            )
+			        )
+			    )
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: c23e7393-1330-45c4-aec1-ce460fb04045
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOM Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PM Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: 56111b0c-26fa-4714-9650-a21fe3914ed4
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOM % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [MOM Upcoming SSSWP's],
+			    [PM Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth\Upcoming SSSWP's
+		lineageTag: e9198518-9828-448c-8aeb-4c6bcd71dd08
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYTD Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __PreviousFiscalYear = MAX ( 'Dates from Bravo'[Fiscal Year Number] ) - 1
+			    VAR __LastDayOfFiscalYearAvailable =
+			        CALCULATE (
+			            MAX ( 'Dates from Bravo'[Day of Fiscal Year Number] ),
+			            -- Removes filters from filter-safe columns
+			            -- to get the last day with data selected in the report
+			            REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Number] = __PreviousFiscalYear,
+			            'Dates from Bravo'[Day of Fiscal Year Number] <= __LastDayOfFiscalYearAvailable,
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: 7fdf8d78-4276-4fdb-b856-f8ac1ab9330c
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOYTD Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [YTD Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PYTD Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: 23e7c26f-f90e-4ebf-a508-75dd6478b9bb
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YOYTD % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [YOYTD Upcoming SSSWP's],
+			    [PYTD Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: 52479902-f8b0-4eda-a3d1-fb3df43a592f
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQTD Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastMonthSelected =
+			        MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __DaysOnLastMonth =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __DaysLastMonthSelected =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE,
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __LastDayOfMonthWithTransactions =
+			        MAX (
+			            -- End of month of any month
+			            31 * (__DaysOnLastMonth = __DaysLastMonthSelected),
+			            -- or last day selected with data
+			            CALCULATE (
+			                MAX ( 'Dates from Bravo'[Day of Month Number] ),
+			                -- Removes filters from all of the filter-safe columns
+			                -- to get the last day with data selected in the report
+			                REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __LastMonthSelected,
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        )
+			    VAR __LastMonthInQuarterWithTransactions =
+			        CALCULATE (
+			            MAX ( 'Dates from Bravo'[Fiscal Month in Quarter Number] ),
+			            -- Removes filters from all of the filter-safe columns
+			            -- to get the last day with data selected in the report
+			            REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE
+			        )
+			    VAR __PreviousFiscalYearQuarter =
+			        MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] ) - 1
+			    VAR __FilterQTD =
+			        FILTER (
+			            ALL ( 'Dates from Bravo'[Fiscal Month in Quarter Number], 'Dates from Bravo'[Day of Month Number] ),
+			            ISONORAFTER (
+			                'Dates from Bravo'[Fiscal Month in Quarter Number], __LastMonthInQuarterWithTransactions, DESC,
+			                'Dates from Bravo'[Day of Month Number], __LastDayOfMonthWithTransactions, DESC
+			            )
+			        )
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __PreviousFiscalYearQuarter,
+			            __FilterQTD
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: 146c59c1-6d63-4781-95ba-36813a094bd2
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQTD Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [QTD Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PQTD Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: 098177cb-3b7f-451b-a88c-5bdb4c73874a
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QOQTD % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [QOQTD Upcoming SSSWP's],
+			    [PQTD Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: dd0457e5-95f5-48fb-a882-3c3c1b488530
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PMTD Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastMonthSelected =
+			        MAX ( 'Dates from Bravo'[Year Month Number] )
+			    VAR __DaysOnLastMonth =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __DaysLastMonthSelected =
+			        CALCULATE (
+			            COUNTROWS ( 'Dates from Bravo' ),
+			            'Dates from Bravo'[DateWithTransactions] = TRUE,
+			            'Dates from Bravo'[Year Month Number] = __LastMonthSelected
+			        )
+			    VAR __LastDayOfMonthWithTransactions =
+			        MAX (
+			            -- End of month of any month
+			            31 * (__DaysOnLastMonth = __DaysLastMonthSelected),
+			            -- or last day selected with data
+			            CALCULATE (
+			                MAX ( 'Dates from Bravo'[Day of Month Number] ),
+			                -- Removes filters from all of the filter-safe columns
+			                -- to get the last day with data selected in the report
+			                REMOVEFILTERS ( 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			                'Dates from Bravo'[Year Month Number] = __LastMonthSelected,
+			                'Dates from Bravo'[DateWithTransactions] = TRUE
+			            )
+			        )
+			    VAR __PreviousYearMonth = __LastMonthSelected - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __PreviousYearMonth,
+			            'Dates from Bravo'[Day of Month Number] <= __LastDayOfMonthWithTransactions
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: aa6a3c51-9d1d-4782-a9ef-a6e2cc5a626f
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOMTD Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [MTD Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PMTD Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: 0bd5d7c6-f644-4e15-b5fb-39833c789bf0
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MOMTD % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [MOMTD Upcoming SSSWP's],
+			    [PMTD Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: 5adb5cff-aa46-423c-913c-280f5e416e15
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYC Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Fiscal Year Number] ),
+			    VAR __PreviousFiscalYear = MAX ( 'Dates from Bravo'[Fiscal Year Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Number] = __PreviousFiscalYear
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: e5f058fc-7ddf-49fb-9cf0-277063e3ca66
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YTDOPY Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [YTD Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PYC Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: 4e8b5de1-e1d5-472b-a368-4abe8670dcd7
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'YTDOPY % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [YTDOPY Upcoming SSSWP's],
+			    [PYC Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: d27ef417-0695-432f-baa2-be77c6465e06
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PQC Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Fiscal Year Quarter Number] ),
+			    VAR __PreviousFiscalYearQuarter = MAX ( 'Dates from Bravo'[Fiscal Year Quarter Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Fiscal Year Quarter Number] = __PreviousFiscalYearQuarter
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: 4633a8b6-7e5e-4246-8af7-5cd4a98eecb2
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTDOPQ Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [QTD Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PQC Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: b7776633-7f55-431e-85d7-fb31779256e1
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'QTDOPQ % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [QTDOPQ Upcoming SSSWP's],
+			    [PQC Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: 585f1c54-e4d0-421f-acf5-5e32d2d261ec
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PMC Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates] && HASONEVALUE ( 'Dates from Bravo'[Year Month Number] ),
+			    VAR __PreviousFiscalYearMonth = MAX ( 'Dates from Bravo'[Year Month Number] ) - 1
+			    VAR __Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Year Month Number] = __PreviousFiscalYearMonth
+			        )
+			    RETURN
+			        __Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: c1f672b2-1f31-4b29-bb77-651584166473
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTDOPM Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [MTD Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PMC Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: c71b56dd-88f0-4bd0-8521-4066e95097f4
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MTDOPM % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [MTDOPM Upcoming SSSWP's],
+			    [PMC Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: 225e8cce-913b-4009-8a98-661c40d7aaf4
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MAT Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayMAT = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __FirstDayMAT = INT ( EDATE ( __LastDayMAT + 1, -12 ) )
+			    VAR Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Moving annual growth\Upcoming SSSWP's
+		lineageTag: b39fd762-54b6-44a1-8623-af1cd542de48
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MAT-364 Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayMAT = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __FirstDayMAT = __LastDayMAT - 363
+			    VAR Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Moving annual growth\Upcoming SSSWP's
+		lineageTag: 50a49fdc-bcee-4578-a3d8-9d9b545ded9a
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYMAT Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __LastDayMAT = INT ( EDATE ( __LastDayAvailable, -12 ) )
+			    VAR __FirstDayMAT = INT ( EDATE ( __LastDayAvailable + 1, -24 ) )
+			    VAR Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Moving annual growth\Upcoming SSSWP's
+		lineageTag: dd53d206-02dc-4263-954a-3c1add30658e
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'PYMAT-364 Upcoming SSSWP''s' =
+			
+			IF (
+			    [_ShowValueForDates],
+			    VAR __LastDayAvailable = MAX ( 'Dates from Bravo'[Sequential Day Number] )
+			    VAR __LastDayMAT = __LastDayAvailable - 364
+			    VAR __FirstDayMAT = __LastDayMAT - 363
+			    VAR Result =
+			        CALCULATE (
+			            [Upcoming SSSWP's],
+			            ALLEXCEPT ( 'Dates from Bravo', 'Dates from Bravo'[Day of Week], 'Dates from Bravo'[Day of Week Number] ),
+			            'Dates from Bravo'[Sequential Day Number] >= __FirstDayMAT
+			                && 'Dates from Bravo'[Sequential Day Number] <= __LastDayMAT
+			        )
+			    RETURN
+			        Result
+			)
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Moving annual growth\Upcoming SSSWP's
+		lineageTag: ebbba277-e67a-4c0c-ab30-52e487df4ffa
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [MAT Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PYMAT Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: 7c52fa87-eb30-4533-885a-ece804c09051
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG-364 Upcoming SSSWP''s' =
+			
+			VAR __ValueCurrentPeriod = [MAT-364 Upcoming SSSWP's]
+			VAR __ValuePreviousPeriod = [PYMAT-364 Upcoming SSSWP's]
+			VAR __Result =
+			    IF (
+			        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+			        __ValueCurrentPeriod - __ValuePreviousPeriod
+			    )
+			RETURN
+			    __Result
+		formatString: General Date
+		isHidden
+		displayFolder: Time intelligence\Growth over full period\Upcoming SSSWP's
+		lineageTag: e9b94244-264f-45be-9da2-87da65386535
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [MATG Upcoming SSSWP's],
+			    [PYMAT Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: dd723c30-e015-428a-93ee-27f439069fe2
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	measure 'MATG-364 % Upcoming SSSWP''s' =
+			
+			DIVIDE (
+			    [MATG-364 Upcoming SSSWP's],
+			    [PYMAT-364 Upcoming SSSWP's]
+			)
+		formatString: 0.00%
+		isHidden
+		displayFolder: Time intelligence\To-date growth\Upcoming SSSWP's
+		lineageTag: a9c59bfa-00c0-411f-b19e-5e9d9fd0bd5a
+
+		annotation SQLBI_Template = TimeIntelligence
+
+		annotation SQLBI_TimeIntelligence = Monthly
+
+		annotation SQLBI_CalendarType = Fiscal
+
+	column Date
+		isHidden
+		isKey
+		formatString: m/d/yyyy
+		lineageTag: 12c6480e-4127-4035-a30f-f0172e6fe018
+		dataCategory: PaddedDateTableDates
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		annotation SQLBI_AttributeTypes = Date, FiscalDate
+
+	column DateKey
+		isHidden
+		formatString: 0
+		lineageTag: 15dba7e4-d3d4-4006-b30b-c6159ee5c12e
+		summarizeBy: count
+		isNameInferred
+		sourceColumn: [DateKey]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Sequential Day Number'
+		isHidden
+		formatString: 0
+		lineageTag: 4dcc640d-371a-4da1-a86b-5cf89b88e141
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Sequential Day Number]
+
+		annotation SQLBI_AttributeTypes = ManufacturingDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Year Month'
+		isHidden
+		lineageTag: 6526c7d5-5c7a-4904-867c-b9976789ce5f
+		dataCategory: Months
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Year Month]
+		sortByColumn: 'Year Month Number'
+
+	column 'Year Month Number'
+		isHidden
+		formatString: 0
+		lineageTag: ee8b9d1e-11fc-4822-a67b-fd7ea9eae0ae
+		dataCategory: Months
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Year Month Number]
+
+		annotation SQLBI_AttributeTypes = FiscalMonths
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Year'
+		isHidden
+		lineageTag: 8d7809af-0513-4a02-b916-03dde4d88171
+		dataCategory: Years
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Fiscal Year]
+		sortByColumn: 'Fiscal Year Number'
+
+	column 'Fiscal Year Number'
+		isHidden
+		formatString: 0
+		lineageTag: f00ed99f-c33d-4409-8b73-e2831a3d2ecb
+		dataCategory: Years
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Fiscal Year Number]
+
+		annotation SQLBI_AttributeTypes = FiscalYears
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Year Quarter'
+		isHidden
+		lineageTag: ffa4e06e-f4fa-4b6c-b25f-ead9dd546478
+		dataCategory: Quarters
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Fiscal Year Quarter]
+		sortByColumn: 'Fiscal Year Quarter Number'
+
+	column 'Fiscal Year Quarter Number'
+		isHidden
+		formatString: 0
+		lineageTag: 3a237687-96eb-4964-881e-f64b854a159b
+		dataCategory: Quarters
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Fiscal Year Quarter Number]
+
+		annotation SQLBI_AttributeTypes = FiscalQuarters
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Quarter'
+		isHidden
+		lineageTag: 4dea2bac-c87e-4a96-8512-4df6765382cf
+		dataCategory: QuarterOfYear
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Fiscal Quarter]
+
+	column Month
+		isHidden
+		lineageTag: be87bde9-8c98-420a-9d5b-f52155a6c428
+		dataCategory: MonthOfYear
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Month]
+		sortByColumn: 'Fiscal Month Number'
+
+	column 'Fiscal Month Number'
+		isHidden
+		formatString: 0
+		lineageTag: 24336b5d-d593-4ed7-8e68-dba0015d076b
+		dataCategory: MonthOfYear
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Fiscal Month Number]
+
+		annotation SQLBI_AttributeTypes = FiscalMonthOfYear
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Month in Quarter Number'
+		isHidden
+		formatString: 0
+		lineageTag: bf90f221-8556-40fa-8060-43dc833f7caf
+		dataCategory: MonthOfQuarter
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Fiscal Month in Quarter Number]
+
+		annotation SQLBI_AttributeTypes = FiscalMonthOfQuarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Week'
+		isHidden
+		lineageTag: 73210955-052b-4803-b660-547147e54c9d
+		dataCategory: DayOfWeek
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Day of Week]
+		sortByColumn: 'Day of Week Number'
+
+		annotation SQLBI_AttributeTypes = FiscalDayOfWeek
+
+		annotation SQLBI_FilterSafe = True
+
+	column 'Day of Week Number'
+		isHidden
+		formatString: 0
+		lineageTag: 7bf9840f-ac29-4131-9674-07f91d94bd11
+		dataCategory: DayOfWeek
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Day of Week Number]
+
+		annotation SQLBI_AttributeTypes = FiscalDayOfWeek
+
+		annotation SQLBI_FilterSafe = True
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Month Number'
+		isHidden
+		formatString: 0
+		lineageTag: 831a9b4f-ce61-4c89-9130-6a2f92ccb8f7
+		dataCategory: DayOfMonth
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Day of Month Number]
+
+		annotation SQLBI_AttributeTypes = FiscalDayOfMonth
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Fiscal Year Number'
+		isHidden
+		formatString: 0
+		lineageTag: c28b59d4-d063-40a5-92c3-274ddb3f91b6
+		dataCategory: DayOfYear
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Day of Fiscal Year Number]
+
+		annotation SQLBI_AttributeTypes = FiscalDayOfYear
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateWithTransactions
+		isHidden
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 742d9544-56c9-46b3-b152-2f19862b0fe7
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [DateWithTransactions]
+
+		annotation SQLBI_AttributeTypes = DateDuration
+
+	hierarchy Fiscal
+		isHidden
+		lineageTag: f39f7ce4-1436-4adc-ad25-6a061f7982a9
+
+		level Year
+			lineageTag: 458d92fc-a32b-42ff-9f3b-73597b70fb6d
+			column: 'Fiscal Year'
+
+		level Quarter
+			lineageTag: f9da7d2d-4dde-4fc0-afbc-834ca506a435
+			column: 'Fiscal Year Quarter'
+
+		level Month
+			lineageTag: e2ee7fc8-d992-4a7b-bb5c-d3c2e77f6956
+			column: 'Year Month'
+
+	partition DateAutoTemplate = calculated
+		mode: import
+		source = ```
+				
+				--  
+				--     Configuration
+				--  
+				VAR __FirstFiscalMonth = 10
+				-- Fiscal year as Calendar Year of :
+				-- 0 - First day of fiscal year
+				-- 1 - Last day of fiscal year
+				VAR __TypeStartFiscalYear = 1
+				-- 0 = Sunday, 1 = Monday, ...
+				VAR __FirstDayOfWeek = 0
+				----------------------------------------
+				VAR __IsStandardLocale = IF ( FORMAT( DATE( 2000, 1, 1 ), "oooo" ) = "oooo", TRUE, FALSE )
+				VAR __MonthFormatString = IF( __IsStandardLocale, "mmm", "ooo" )
+				VAR __OffsetFiscalYearBeforeMonth = IF ( __FirstFiscalMonth > 1, __TypeStartFiscalYear - 1, 0 )
+				VAR __OffsetFiscalYearOnOrAfterMonth = IF ( __FirstFiscalMonth > 1, __TypeStartFiscalYear, 0 )
+				VAR __DayFormatString = IF( __IsStandardLocale, "ddd", "aaa" )
+				VAR __WeekDayCalculationType = IF ( __FirstDayOfWeek = 0, 7, __FirstDayOfWeek ) + 10
+				VAR __Calendar = 
+				    VAR __FirstYear = YEAR ( MINX ( { MIN ( 'FY25 Safety Plan Fact Table'[Plan_Due_Date] ), MIN ( 'FY25 Safety Plan Fact Table'[Reviewed_Date] ), MIN ( 'FY25 Safety Plan Fact Table'[Task_start_Date] ), MIN ( 'FY Date Table dim'[Date] ) }, ''[Value] ) )
+				    VAR __LastYear =  YEAR ( MAXX ( { MAX ( 'FY25 Safety Plan Fact Table'[Plan_Due_Date] ), MAX ( 'FY25 Safety Plan Fact Table'[Reviewed_Date] ), MAX ( 'FY25 Safety Plan Fact Table'[Task_start_Date] ), MAX ( 'FY Date Table dim'[Date] ) }, ''[Value] ) )
+				    RETURN CALENDAR (
+				        DATE ( __FirstYear, 1, 1 ),
+				        DATE ( __LastYear, 12, 31 )
+				    )
+				VAR __Step3 = 
+				    GENERATE (
+				        __Calendar,
+				        VAR __LastTransactionDate = MAXX ( { MAX ( 'FY25 Safety Plan Fact Table'[Plan_Due_Date] ), MAX ( 'FY25 Safety Plan Fact Table'[Reviewed_Date] ), MAX ( 'FY25 Safety Plan Fact Table'[Task_start_Date] ), MAX ( 'FY Date Table dim'[Date] ) }, ''[Value] )
+				        VAR __Date = [Date]
+				        VAR __YearNumber = YEAR ( __Date )
+				        VAR __MonthNumber = MONTH ( __Date )
+				        VAR __DayOfMonthNumber = DAY ( __Date )
+				        VAR __DateKey = __YearNumber * 10000 + __MonthNumber * 100 + __DayOfMonthNumber
+				        VAR __FiscalYearNumber = __YearNumber + __OffsetFiscalYearOnOrAfterMonth * ( __FirstFiscalMonth > 1 && __MonthNumber >= __FirstFiscalMonth ) + __OffsetFiscalYearBeforeMonth * ( __FirstFiscalMonth > 1 && __MonthNumber < __FirstFiscalMonth )
+				        VAR __FiscalMonthNumber = __MonthNumber - __FirstFiscalMonth + 1 + 12 * (__MonthNumber < __FirstFiscalMonth)
+				        VAR __FiscalQuarterNumber = ROUNDUP ( __FiscalMonthNumber / 3, 0 )
+				        VAR __FiscalYearQuarterNumber = CONVERT ( __FiscalYearNumber * 4 + __FiscalQuarterNumber - 1, INTEGER )
+				        VAR __FiscalMonthInQuarterNumber = MOD ( __FiscalMonthNumber - 1, 3 ) + 1
+				        VAR __WeekDay = FORMAT ( __Date, __DayFormatString )
+				        VAR __WeekDayNumber = WEEKDAY ( __Date, __WeekDayCalculationType )
+				        VAR __FirstDayOfYear = DATE ( __FiscalYearNumber - 1 * (__FirstFiscalMonth > 1), __FirstFiscalMonth, 1 )
+				        VAR __FiscalYearDayNumber = 
+				            SUMX (
+				                CALENDAR ( __FirstDayOfYear, __Date ),
+				                1 * ( MONTH ( ''[Date] ) <> 2 || DAY ( ''[Date] ) <> 29 )
+				            )
+				        RETURN ROW ( 
+				            "DateKey", __DateKey,
+				            "Sequential Day Number", INT ( __Date ),
+				            "Year Month", FORMAT ( __Date, __MonthFormatString & " yyyy" ),
+				            "Year Month Number", __YearNumber * 12 + __MonthNumber - 1,
+				            "Fiscal Year", FORMAT ( __FiscalYearNumber, "\F\Y 0000" ),
+				            "Fiscal Year Number", __FiscalYearNumber,
+				            "Fiscal Year Quarter", FORMAT ( __FiscalQuarterNumber, "\F\Q0" ) & "-" & FORMAT ( __FiscalYearNumber, "0000" ),
+				            "Fiscal Year Quarter Number", __FiscalYearQuarterNumber,
+				            "Fiscal Quarter", FORMAT( __FiscalQuarterNumber, "\F\Q0" ),
+				            "Month", FORMAT ( __Date, __MonthFormatString ),
+				            "Fiscal Month Number", __FiscalMonthNumber,
+				            "Fiscal Month in Quarter Number", __FiscalMonthInQuarterNumber,
+				            "Day of Week", __WeekDay,
+				            "Day of Week Number", __WeekDayNumber,
+				            "Day of Month Number", __DayOfMonthNumber,
+				            "Day of Fiscal Year Number", __FiscalYearDayNumber,
+				            "DateWithTransactions", __Date <= __LastTransactionDate 
+				        )
+				    )
+				RETURN
+				    __Step3
+				```
+
+	annotation SQLBI_Template = Dates
+
+	annotation SQLBI_TemplateTable = DateAutoTemplate
+
+	annotation SQLBI_CalendarType = Fiscal
+

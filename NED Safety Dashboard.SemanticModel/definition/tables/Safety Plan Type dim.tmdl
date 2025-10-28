@@ -1,0 +1,26 @@
+table 'Safety Plan Type dim'
+	lineageTag: 219044a5-97c3-4e15-8b3d-4481889203b4
+
+	column Plan_Type
+		dataType: string
+		lineageTag: bf7d3a43-fefb-4aba-b467-da902eb4c11e
+		summarizeBy: none
+		sourceColumn: Plan_Type
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Safety Plan Type dim' = m
+		mode: import
+		source =
+				let
+				    Source = #"FY25 Safety Plan Fact Table",
+				    #"Removed Other Columns" = Table.SelectColumns(Source,{"Safety_Plan_Type"}),
+				    #"Removed Duplicates" = Table.Distinct(#"Removed Other Columns"),
+				    #"Renamed Columns" = Table.RenameColumns(#"Removed Duplicates",{{"Safety_Plan_Type", "Plan_Type"}})
+				in
+				    #"Renamed Columns"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

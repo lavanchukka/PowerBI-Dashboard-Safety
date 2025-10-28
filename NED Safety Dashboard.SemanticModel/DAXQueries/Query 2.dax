@@ -1,0 +1,10 @@
+EVALUATE
+	ROW(
+		"Table", "FY25 Safety Plan Fact Table",
+		"Column", "Safety_Plan_Status",
+		"Count", COUNT('FY25 Safety Plan Fact Table'[Safety_Plan_Status]),
+		"Distinct Values", DISTINCTCOUNTNOBLANK('FY25 Safety Plan Fact Table'[Safety_Plan_Status]),
+		"Null Count", COUNTROWS('FY25 Safety Plan Fact Table') - COUNT('FY25 Safety Plan Fact Table'[Safety_Plan_Status]),
+		"Min", MIN('FY25 Safety Plan Fact Table'[Safety_Plan_Status]),
+		"Max", MAX('FY25 Safety Plan Fact Table'[Safety_Plan_Status])
+	)

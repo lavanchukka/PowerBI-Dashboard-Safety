@@ -1,0 +1,12 @@
+DEFINE
+	MEASURE 'FY25 Safety Plan Fact Table'[Status Count] = COUNT('FY25 Safety Plan Fact Table'[Safety_Plan_Status])
+	MEASURE 'FY25 Safety Plan Fact Table'[Measure] = FILTER(
+			ALL('FY25 Safety Plan Fact Table'[Safety_Plan_Status]),
+			[Safety_Plan_Status] = "Reviewed"
+		)
+
+EVALUATE
+	SUMMARIZECOLUMNS(
+		"Status Count", 'FY25 Safety Plan Fact Table'[Status Count],
+		"Measure", 'FY25 Safety Plan Fact Table'[Measure]
+	

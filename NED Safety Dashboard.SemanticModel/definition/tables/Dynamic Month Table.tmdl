@@ -1,0 +1,38 @@
+table 'Dynamic Month Table'
+	lineageTag: 8953666f-88cf-4f01-be98-b80434e01291
+
+	column 'Dynamic Date Range'
+		formatString: Short Date
+		lineageTag: cc2b7a4e-3c68-44d7-bb71-b420fbd5824c
+		summarizeBy: none
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month No' = month('Dynamic Month Table'[Dynamic Date Range])
+		dataType: int64
+		formatString: 0
+		lineageTag: cd71d600-87dd-4cb8-abd6-1c3c8f2eed8c
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month = ```
+			Switch(TRUE(),   
+			          Month('Dynamic Month Table'[Dynamic Date Range]) = Month(Today()), "Current Month",
+			           Month('Dynamic Month Table'[Dynamic Date Range]) = Month(Today())+1, "Next Month",
+			            Month('Dynamic Month Table'[Dynamic Date Range]) = Month(Today())-1, "Previous Month",
+			            blank()
+			)
+			```
+		lineageTag: a466a26d-d59f-4a76-ab24-8ada2a294dfd
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Dynamic Month Table' = calculated
+		mode: import
+		source = calendar(eomonth(today(),-2)+1,eomonth(today(),1))
+
+	annotation PBI_Id = 9724958fa4044fe2a083d92676161227
+
